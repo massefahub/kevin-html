@@ -1,0 +1,1642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Platform Comparison - Xbox vs PlayStation vs Steam vs Epic</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+        body { font-family: 'DM Sans', sans-serif; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .fade-in { animation: fadeIn 0.3s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    
+    <script type="text/babel">
+        const { useState } = React;
+
+/* ============================================================================
+   DASHBOARD DATA - EDIT THIS SECTION
+   ============================================================================
+   
+   This section contains all the content data for the dashboard.
+   Edit the values below to update what appears in the dashboard.
+   
+   STATUS VALUES:
+   - "leading"     = Green badge, indicates best-in-class
+   - "competitive" = Amber badge, indicates on par with competitors  
+   - "opportunity" = Blue badge, indicates room for improvement
+   
+   ============================================================================ */
+
+// ----------------------------------------------------------------------------
+// TAB-SPECIFIC PRIORITIES
+// Each tab has 3 priorities focused on the greatest revenue opportunities.
+// Each priority has: number, title, description, rationale (shown in modal)
+// Keyed by category id (tools, growth, discovery, release, security, experience)
+// ----------------------------------------------------------------------------
+        const tabPriorities = {
+          tools: [
+            {
+              number: 1,
+              title: "Modernize Analytics with PlayFab Insights",
+              description: "Partner Center Insights lags Steamworks analytics. Integrate PlayFab's real-time telemetry to give developers live engagement, revenue, and retention dashboards that rival Steam's—driving developer preference.",
+              rationale: "Developers choose platforms partly based on the quality of analytics available. Steamworks offers real-time sales, wishlist tracking, conversion funnels, and A/B testing. Xbox Partner Center Insights is more limited and less real-time. PlayFab already powers analytics for 5,000+ games including Minecraft and Sea of Thieves. Surfacing PlayFab-grade dashboards natively in Partner Center would leapfrog competitors and make Xbox the platform where developers have the best visibility into their business. Better data leads to better games, longer support cycles, and more DLC/IAP revenue—all of which increase platform transaction revenue."
+            },
+            {
+              number: 2,
+              title: "Build Self-Service Developer Onboarding",
+              description: "Steam's $100 Steamworks Direct lets any developer publish in days. ID@Xbox is relationship-driven and slower. A self-service fast-track tier would unlock indie and mid-tier catalog growth.",
+              rationale: "Steam added ~14,000 new games in 2024 through its low-friction Steamworks Direct program. While many are low quality, the long tail drives significant aggregate revenue and makes Steam the default first-publish platform for PC developers. Xbox's ID@Xbox program is more curated but slower, creating friction. A self-service tier—automated certification for titles meeting clear criteria, with a small listing fee—would dramatically increase catalog breadth. More games = more reasons for players to stay in the Xbox ecosystem. Combined with better discovery (see Discovery tab), this becomes a flywheel: more games → better recommendations → more purchases → more developers."
+            },
+            {
+              number: 3,
+              title: "Expand PlayFab as Cross-Platform Game Backend",
+              description: "PlayFab competes with Epic Online Services to be the 'AWS of gaming.' Winning developer backends locks in Xbox ecosystem advantages even on competing storefronts.",
+              rationale: "PlayFab (acquired 2018) powers live-ops, matchmaking, economy management, and analytics for 5,000+ games across all platforms. Epic Online Services (EOS) is the direct competitor, offering free cross-platform services. The strategic value: developers who build on PlayFab become deeply integrated with Microsoft infrastructure. Their multiplayer runs on Azure, their data flows through Microsoft systems, and the path of least resistance for new features is Xbox-native integration. This creates developer lock-in that transcends storefront competition. PlayFab revenue is growing, and every game using it strengthens the Xbox developer ecosystem—even games on PlayStation and Steam."
+            }
+          ],
+          growth: [
+            {
+              number: 1,
+              title: "Expand Geographic Reach to Close 120-Country Gap",
+              description: "Xbox serves 75+ countries vs Steam's 195+. Prioritize Southeast Asia, Latin America, and Africa—regions with validated gaming demand but low console penetration.",
+              rationale: "Steam operates in 195+ countries with 100+ regional payment methods, while Xbox is available in only 75+. This 120+ country gap represents millions of potential players and billions in uncaptured revenue. Key opportunity regions: Southeast Asia (700M+ population, growing middle class transitioning from mobile to PC/console), Latin America (Brazil and Mexico are top-20 gaming markets globally), and Africa (fastest-growing internet penetration worldwide). Steam has already validated demand in these regions with localized pricing and payment methods. Expanding Xbox availability—even PC-only initially—would grow the addressable market for Game Pass, increase developer reach, and capture players before PlayStation does."
+            },
+            {
+              number: 2,
+              title: "Optimize Game Pass Deal Economics for Live-Service Revenue",
+              description: "Game Pass deals range from $50K to $50M upfront. Shift toward engagement-based revenue sharing that aligns developer incentives with long-term player retention and IAP monetization.",
+              rationale: "Game Pass reached ~$5B annual revenue in FY2025 with 37M+ subscribers. Current deal structures vary widely—flat fees, usage-based, and hybrids. The opportunity: live-service games drive the most Game Pass engagement and generate significant IAP/MTX revenue on top of subscription fees. Shifting deal structures toward engagement-based models (where developers earn more as players play more and spend more on IAP) creates alignment: developers invest in game quality and live-ops because it directly increases their revenue, while Microsoft benefits from subscriber retention. Games like Sea of Thieves and Fallout 76 already demonstrate this model. Standardizing and scaling it would make Game Pass the preferred launch platform for live-service titles."
+            },
+            {
+              number: 3,
+              title: "Build Self-Service Seller Tools & Targeted Offers",
+              description: "Steam lets developers control discounts, visibility, and A/B test store pages. Xbox relies on editorial featuring. Self-service merchandising tools would increase developer revenue and platform transaction volume.",
+              rationale: "Steam's self-service model lets developers schedule their own discounts, get automatic visibility boosts for updates, A/B test store page assets, and track conversion funnels. Xbox Partner Center is more analytics-focused with limited self-service promotional tools—discounts and featuring are largely editorial/relationship-driven. Building self-service tools would: (1) let developers optimize their own sales velocity, increasing platform transaction revenue, (2) reduce Xbox's editorial bottleneck, (3) enable targeted offers using Game Pass behavioral data (e.g., 'players who played Game X on Game Pass—offer 20% off Game Y'), and (4) level the playing field for indie and mid-tier developers who lack direct relationships with Xbox editorial teams."
+            }
+          ],
+          discovery: [
+            {
+              number: 1,
+              title: "Build AI-Powered Discovery Using Game Pass Play Data",
+              description: "37M+ Game Pass subscribers generate unmatched behavioral data. Invest in ML recommendation engine to match Steam's Discovery Queue—turning browsing into buying.",
+              rationale: "Steam's AI-powered recommendation system drove a 41% increase in user engagement and improved indie discoverability by 28%. Xbox has a unique data advantage: 37M+ Game Pass subscribers try games at no incremental cost, generating rich signal on what players actually enjoy—not just what they buy. This is fundamentally better training data than Steam's purchase-based signals because it captures true preference, not just willingness to pay. Building an ML recommendation engine ('Players who loved Hades also played...') would improve long-tail discovery, increase conversion from browsing to purchasing (especially DLC/IAP), and make the Xbox Store a destination rather than a Game Pass launcher. The revenue impact of good discovery is enormous—Steam attributes significant incremental revenue to Discovery Queue surfacing games players wouldn't have found otherwise."
+            },
+            {
+              number: 2,
+              title: "Launch Xbox Next Fest (Developer Demo Events)",
+              description: "Steam Next Fest drives massive wishlist growth for upcoming games. An Xbox equivalent—with Game Pass integration—would create a unique pre-release discovery channel competitors can't match.",
+              rationale: "Steam Next Fest (held 3x/year) lets players try hundreds of demos simultaneously, generating millions of wishlists for upcoming games. It's become the single most important discovery event for indie and mid-tier developers. Xbox has no equivalent. Creating 'Xbox Next Fest' with Game Pass integration would be uniquely powerful: subscribers could trial upcoming games seamlessly, developers would get exposure to 37M+ subscribers, and Microsoft could use trial engagement data to predict hits and optimize Game Pass acquisition deals. The revenue opportunity is both direct (wishlists → purchases) and indirect (developers choosing Xbox as first-publish platform for the exposure)."
+            },
+            {
+              number: 3,
+              title: "Invest in Curator & Creator Discovery Programs",
+              description: "Steam has 12K+ Curators driving game discovery. TikTok and YouTube are where Gen Z discovers games. Build a creator-powered discovery ecosystem integrated with the Xbox Store.",
+              rationale: "38% of developers cite high competition among platforms as a visibility hurdle, and 51% of gamers frequently switch between stores. Discovery increasingly happens outside the store—TikTok, YouTube, and influencer streams are how Gen Z and younger Millennials find games. Steam Curators (12K+ curators with followers) provide trusted in-store recommendations. Xbox has limited creator tools. Building an integrated creator/curator program—where content creators can link directly to Xbox Store pages, earn commissions on referrals, and curate public recommendation lists—would capture external discovery and funnel it into Xbox purchases. Epic's Support-A-Creator (Fortnite-focused) and Steam's Curators prove the model works."
+            }
+          ],
+          release: [
+            {
+              number: 1,
+              title: "Implement Trusted Developer Fast-Track Certification",
+              description: "3-7 day cert cycles vs Steam's instant updates. A fast-track program for proven developers would close the speed gap while maintaining Xbox's quality reputation.",
+              rationale: "Steam and Epic allow developers to push updates instantly, while Xbox requires 3-7 day certification for patches. For live-service games—which now dominate engagement and revenue—this delay is critical. A game-breaking bug on Steam gets fixed in hours; Xbox players wait days. This directly impacts revenue: players churn during outages, miss time-limited events, and lose trust. A 'Trusted Developer' fast-track (similar to Apple's approach for established iOS developers) could reduce patch times to <24 hours for verified partners with strong track records, while maintaining full certification for new developers. This would remove the #1 friction point cited by live-service developers considering Xbox as a launch platform."
+            },
+            {
+              number: 2,
+              title: "Strengthen Early Access / Game Preview Program",
+              description: "Steam Early Access is the industry standard for pre-release revenue. Xbox Game Preview exists but is underutilized—expanding it with better developer tools and visibility would capture pre-release spending.",
+              rationale: "Steam Early Access generated billions in revenue by letting developers sell unfinished games, fund development with player revenue, and build communities before launch. Some of gaming's biggest successes (Baldur's Gate 3, Valheim, Hades) used Early Access. Xbox Game Preview exists but is rarely used by third-party developers—Steam is the default choice for early access launches. Improving Game Preview with better developer tools (analytics, feedback collection, update visibility), Game Pass integration (let subscribers trial Early Access games), and promotional support would capture pre-release revenue that currently flows entirely to Steam. The revenue opportunity includes direct sales plus long-term ecosystem lock-in as players invest time in games before they launch."
+            },
+            {
+              number: 3,
+              title: "Enable Day-One Cross-Platform Launches via Tooling",
+              description: "Cross-platform gaming adoption is accelerating—nearly half of gamers play across multiple platforms. Reduce the friction of simultaneous Xbox launches with streamlined cert and GDK tooling.",
+              rationale: "Cross-platform gaming adoption reached 48% in 2025, and multi-platform players show significantly higher engagement and spending. But simultaneous launch on Xbox still requires separate certification, GDK integration, and compliance testing—adding weeks vs. a Steam-only launch. Many indie and mid-tier developers launch Steam-first and port to Xbox months later (or never). Reducing this friction through streamlined GDK onboarding, parallel certification processes, and better cross-platform development tools would capture day-one revenue that currently goes exclusively to Steam. Every month a game is Steam-exclusive is lost Xbox store revenue and lost Game Pass catalog opportunity."
+            }
+          ],
+          security: [
+            {
+              number: 1,
+              title: "Position Xbox Security as Developer Premium Service",
+              description: "Xbox's enterprise-grade fraud protection and Microsoft's security infrastructure are unmatched in gaming. Package and market this as a developer service that reduces fraud losses and chargebacks.",
+              rationale: "The online gaming security solutions market is projected to grow from $3.5B (2024) to $11.2B (2033). Fraud, chargebacks, and account theft cost developers and platforms billions annually. Xbox sits on Microsoft's enterprise security backbone—the same infrastructure protecting Azure, Microsoft 365, and Windows. This is a genuine competitive advantage over Steam (which relies on Steam Guard) and Epic. Packaging Xbox security as a developer-facing premium service—fraud detection APIs, chargeback protection, account security tools—would generate direct revenue from the security service itself while making Xbox more attractive to developers concerned about revenue loss from fraud. Live-service games with virtual economies are especially vulnerable and would pay for better protection."
+            },
+            {
+              number: 2,
+              title: "Lead on AI-Powered Anti-Cheat to Protect Competitive Gaming",
+              description: "Anti-cheat market is growing at 10%+ CAGR. AI-vision aimbots are outpacing traditional detection. Leverage Microsoft's AI capabilities to build next-generation anti-cheat that protects competitive integrity.",
+              rationale: "The anti-cheat software market is growing rapidly (projected $11.2B by 2033) as cheating becomes more sophisticated—AI-powered aimbots using computer vision are now emerging that traditional detection can't catch. Competitive gaming and esports (a $1.8B+ industry) depend on anti-cheat integrity. Microsoft has world-class AI/ML capabilities (Azure AI, Copilot infrastructure) that could power next-generation behavioral anti-cheat—analyzing player movement patterns, reaction times, and input anomalies in real-time. Building this as part of Xbox Live / PlayFab and offering it cross-platform would: protect Xbox's competitive gaming ecosystem, generate service revenue from developers, and position Xbox as the trusted platform for competitive play."
+            },
+            {
+              number: 3,
+              title: "Monetize Family Safety as Xbox Family Hub",
+              description: "Xbox already leads on parental controls. Expand Family Settings into a premium family gaming hub—family subscription tier, age-appropriate discovery, and shared library management.",
+              rationale: "Xbox Family Settings app is already industry-leading for parental controls. The opportunity is to expand this from a safety feature into a revenue-generating family gaming hub. A premium family tier could include: shared Game Pass library across family members (like Spotify Family), age-appropriate game recommendations powered by ESRB/PEGI ratings, play-time management dashboards, and family achievement systems. Parents are willing to pay for safe, managed gaming experiences for children. This would differentiate Xbox from PlayStation (basic parental controls) and Steam (minimal family features), attract the family segment, and increase household subscription revenue by converting single Game Pass subscriptions into family plans."
+            }
+          ],
+          experience: [
+            {
+              number: 1,
+              title: "Improve Store Discovery with AI Personalization",
+              description: "Leverage unique Game Pass play data to build AI-powered personalization matching Steam's discovery experience. Current curated approach misses long-tail opportunities.",
+              rationale: "Steam's Discovery Queue and ML recommendations surface games based on player behavior, wishlists, and similar users—driving discovery of long-tail titles. Steam's AI recommendations drove a 41% engagement increase and improved indie discoverability by 28%. Xbox uses editorial curation which favors big releases but misses niche games. Xbox has a unique advantage: Game Pass play data. With 37M+ subscribers trying games at no incremental cost, Xbox has rich signal on what players actually enjoy (not just what they buy). This data could power best-in-class recommendations: 'Players who loved Hades also played...' Building AI-powered personalization would improve player satisfaction, help smaller Game Pass titles find their audience, and increase DLC/IAP conversion by surfacing games players are most likely to invest in."
+            },
+            {
+              number: 2,
+              title: "Add Dynamic Bundle Pricing",
+              description: "Implement 'complete the set' pricing like Steam—only charge for content players don't own. Removes friction for upsells and franchise collection purchases.",
+              rationale: "Steam's 'Complete the Set' bundles (since 2016) automatically adjust price based on owned content—if you own 2 of 5 DLCs, you only pay for the remaining 3 while keeping the bundle discount. Xbox uses fixed bundles that block purchase if you own any content, forcing players to buy items à la carte at full price. This creates friction for franchise collectors and DLC upsells. Implementing dynamic pricing would increase bundle conversion rates, improve customer satisfaction (no 'double dipping'), and drive incremental DLC revenue from players who already own partial content. With add-on content revenue growing from $15B (2023) to $19B (2025) industry-wide, reducing DLC purchase friction directly impacts Xbox's transaction revenue."
+            },
+            {
+              number: 3,
+              title: "Enhance Ratings and Reviews",
+              description: "Add written reviews with verified purchase badges and helpfulness voting. Builds trust and aids discovery—current star-only ratings lack the social proof Steam provides.",
+              rationale: "Steam's review system is industry gold standard: written reviews, helpful/not helpful voting, review graphs over time, 'Recent vs All Reviews' to show current state. This social proof helps players make purchase decisions and surfaces quality games. Xbox only has basic star ratings with low engagement—players rely on external sites (IGN, YouTube) for opinions. Adding written reviews with verified purchase badges would: build trust (real player opinions), aid discovery (positive reviews surface good games), and keep players in the Xbox ecosystem rather than leaving to research elsewhere. PlayStation recently added star ratings—an opportunity to leapfrog with a richer system. Every player who stays in-store to make a decision (instead of leaving to YouTube) is more likely to convert."
+            }
+          ]
+        };
+
+// ----------------------------------------------------------------------------
+// COMPARISON DATA - Main feature comparison tables
+//
+// Structure:
+// - categories: Array of tab categories (tools, growth, discovery, etc.)
+//   - id: unique identifier for the tab (must match key in tabPriorities above)
+//   - name: display name
+//   - icon: emoji icon
+//   - opportunity: summary text shown below category header
+//   - features: Array of feature rows
+//     - name: feature name
+//     - xbox/playstation/steam/epic: { value: "display text", status: "leading|competitive|opportunity" }
+//     - expandable: true (optional) - makes row clickable
+//     - details: { xbox, playstation, steam, epic } - modal content
+//     - fullDetails: { title, content } - collapsible deep-dive (markdown-style)
+// ----------------------------------------------------------------------------
+        const comparisonData = {
+          categories: [
+            {
+              id: "tools",
+              name: "Developer Experiences",
+              icon: "⚙️",
+              opportunity: "Xbox GDK is competitive, but developer tooling, onboarding, and ecosystem data represent growth opportunities",
+              features: [
+                {
+                  name: "SDK / API",
+                  xbox: { value: "Xbox GDK", status: "competitive" },
+                  playstation: { value: "PlayStation Partners SDK", status: "competitive" },
+                  steam: { value: "Steamworks SDK", status: "competitive" },
+                  epic: { value: "Epic Online Services (EOS)", status: "competitive" }
+                },
+                {
+                  name: "SDK API Iteration Experience",
+                  xbox: { value: "N/A", status: "opportunity" },
+                  playstation: { value: "N/A", status: "opportunity" },
+                  steam: { value: "N/A", status: "competitive" },
+                  epic: { value: "N/A", status: "opportunity" }
+                },
+                {
+                  name: "Analytics Dashboard",
+                  xbox: { value: "Partner Center Insights", status: "opportunity" },
+                  playstation: { value: "PlayStation Partners Portal", status: "competitive" },
+                  steam: { value: "Steamworks Analytics", status: "competitive" },
+                  epic: { value: "Epic Dev Portal", status: "competitive" }
+                },
+                {
+                  name: "Gaming Ecosystem Census Data",
+                  xbox: { value: "N/A", status: "opportunity" },
+                  playstation: { value: "N/A", status: "opportunity" },
+                  steam: { value: "Steam Hardware Survey + public stats", status: "leading" },
+                  epic: { value: "N/A", status: "opportunity" }
+                },
+                {
+                  name: "Developer SSO",
+                  xbox: { value: "Microsoft Account / Azure AD", status: "competitive" },
+                  playstation: { value: "PlayStation Partners SSO", status: "competitive" },
+                  steam: { value: "Steam SSO", status: "competitive" },
+                  epic: { value: "Epic Account SSO", status: "competitive" }
+                },
+                {
+                  name: "Developer Support",
+                  xbox: { value: "Partner Center support", status: "competitive" },
+                  playstation: { value: "DevNet support", status: "competitive" },
+                  steam: { value: "Steamworks documentation + community", status: "competitive" },
+                  epic: { value: "Developer support portal", status: "competitive" }
+                },
+                {
+                  name: "Developer Onboarding",
+                  xbox: { value: "ID@Xbox program", status: "competitive" },
+                  playstation: { value: "PlayStation Partners program", status: "competitive" },
+                  steam: { value: "Steamworks Direct ($100 fee)", status: "leading" },
+                  epic: { value: "Curated onboarding", status: "competitive" }
+                },
+                {
+                  name: "Middleware Integration",
+                  xbox: { value: "N/A", status: "opportunity" },
+                  playstation: { value: "N/A", status: "opportunity" },
+                  steam: { value: "N/A", status: "competitive" },
+                  epic: { value: "Unreal Engine native", status: "leading" }
+                },
+                {
+                  name: "Game Crash Data",
+                  xbox: { value: "Partner Center crash analytics", status: "competitive" },
+                  playstation: { value: "N/A", status: "opportunity" },
+                  steam: { value: "Steam crash reporting", status: "competitive" },
+                  epic: { value: "N/A", status: "opportunity" }
+                },
+                {
+                  name: "Remote Device Management (Debugging)",
+                  xbox: { value: "Xbox Dev Mode + remote tools", status: "competitive" },
+                  playstation: { value: "N/A", status: "opportunity" },
+                  steam: { value: "N/A (PC-native)", status: "competitive" },
+                  epic: { value: "N/A (PC-native)", status: "competitive" }
+                },
+                {
+                  name: "Developer-Controlled Semantic Input [XPP Investment]",
+                  xbox: { value: "N/A", status: "opportunity" },
+                  playstation: { value: "N/A", status: "opportunity" },
+                  steam: { value: "Steam Input API", status: "leading" },
+                  epic: { value: "N/A", status: "opportunity" }
+                },
+                {
+                  name: "Achievements System",
+                  xbox: { value: "Gamerscore (gold standard since 2005)", status: "leading" },
+                  playstation: { value: "Trophy System (Platinum/Gold/Silver/Bronze)", status: "competitive" },
+                  steam: { value: "Steam Achievements + Trading Cards", status: "competitive" },
+                  epic: { value: "Basic achievements", status: "opportunity" }
+                },
+                {
+                  name: "Cross-Play Infrastructure",
+                  xbox: { value: "Xbox Live + PlayFab, cross-play encouraged", status: "leading" },
+                  playstation: { value: "PSN cross-play (case-by-case approval)", status: "competitive" },
+                  steam: { value: "Developer choice, no built-in requirement", status: "competitive" },
+                  epic: { value: "Required for exclusives", status: "competitive" }
+                }
+              ]
+            },
+            {
+              id: "growth",
+              name: "Growth",
+              icon: "📈",
+              opportunity: "Platform economics, UGC support, and gaming services are key differentiators for developer attraction",
+              features: [
+                {
+                  name: "Revenue Share",
+                  id: "revenue",
+                  xbox: { value: "Console: 70/30 | PC: 88/12", status: "competitive" },
+                  playstation: { value: "70/30 (standard)", status: "competitive" },
+                  steam: { value: "70/30 → 75/25 → 80/20 (tiered)", status: "leading" },
+                  epic: { value: "88/12 (high dev share, limited reach)", status: "competitive" },
+                  expandable: true,
+                  details: {
+                    xbox: "Console: Standard 70/30 split. PC (Microsoft Store): 88/12 since August 2021. However, the higher PC split hasn't meaningfully grown Store market share—demonstrating that rev share alone doesn't drive platform adoption.",
+                    playstation: "Standard 70/30 split across all PlayStation Store sales. PlayStation Indies program offers promotional support. Consistent with industry norm.",
+                    steam: "Base: 70/30, scaling to 80/20 at $50M+. Despite lower dev share, Steam dominates PC gaming. The 30% margin funds discovery algorithms, Workshop, community features, and legendary sales—making it where buyers are, which ultimately benefits developers more.",
+                    epic: "Flat 88/12 for all developers. Waives Unreal Engine royalty (5%) for EGS games. Despite years of free games and exclusives, hasn't caught Steam—illustrating that higher rev share doesn't compensate for weaker discovery and smaller buyer base."
+                  },
+                  fullDetails: {
+                    title: "Revenue Share Details & The Platform Economics Paradox",
+                    content: `**🔑 Key Insight: Why Higher Rev Share ≠ Better Outcome**
+
+The gaming industry has tested the hypothesis that higher developer revenue share drives platform adoption—and the data doesn't support it:
+
+• **Xbox PC Store (88/12 since Aug 2021):** Despite matching Epic's rate, Microsoft Store's PC gaming share remained flat. Developers didn't flock to the platform.
+• **Epic Games Store (88/12 since 2018):** After 6+ years, $2B+ in exclusives, and hundreds of free games, EGS still trails Steam significantly in market share and daily active users.
+• **Steam (70/30 base):** Maintains ~75% of PC game sales despite the "worst" headline rev share. Why?
+
+**The Platform Investment Thesis:**
+When a platform takes 30%, it can reinvest in:
+• Discovery algorithms that surface games to interested buyers
+• Community features (Workshop, reviews, forums, guides)
+• Legendary sales events that drive massive traffic
+• Developer tools and analytics
+• Infrastructure and CDN for fast downloads globally
+
+When rev share is 88/12, the platform has 60% less margin to fund these investments. The result: fewer buyers visit the store, weaker discovery, and ultimately lower total revenue for developers—even at a higher percentage.
+
+**The Math That Matters:**
+• 70% of $1M in Steam sales = $700K to developer
+• 88% of $200K in EGS sales = $176K to developer
+• Developers rationally choose the platform where buyers are
+
+---
+
+**Xbox Revenue Share:**
+• Console (Xbox Store): 70% developer / 30% Microsoft (standard)
+• PC (Microsoft Store): 88% developer / 12% Microsoft (since Aug 2021)
+• Game Pass: Custom deals - typically upfront payment + per-play royalties
+• ID@Xbox: No fees to join, standard rev share, free dev kits
+• First-party publishing: Select indie deals with marketing support
+• Reality check: 88/12 hasn't grown PC Store share—ecosystem value matters more
+
+**PlayStation Revenue Share:**
+• Standard: 70% developer / 30% Sony (all platforms)
+• PlayStation Indies: Promotional support, featuring, no special rev share
+• PS Plus licensing: Upfront payment for catalog inclusion
+• First-party partnerships: Custom deals for select studios
+
+**Steam Revenue Share:**
+• $0 - $10M lifetime: 70% developer / 30% Valve
+• $10M - $50M lifetime: 75% developer / 25% Valve
+• $50M+ lifetime: 80% developer / 20% Valve
+• All revenue counts: Base game, DLC, microtransactions, soundtracks
+• Steam Direct fee: $100 per game (recoupable)
+• Why it works: 30% funds the ecosystem that makes Steam where 132M MAU shop
+
+**Epic Games Store Revenue Share:**
+• Flat rate: 88% developer / 12% Epic (all developers, all revenue levels)
+• Unreal Engine: 5% royalty waived for EGS games (normally kicks in at $1M)
+• Effective rate for UE games: 88/12 vs 65/35 elsewhere (70/30 + 5% UE)
+• Epic Games Publishing: Custom deals with 50/50 after recoup
+• The challenge: Higher share can't compensate for weaker discovery and smaller buyer base`
+                  }
+                },
+                {
+                  name: "Platform Economics (DLC)",
+                  xbox: { value: "Full DLC support", status: "competitive" },
+                  playstation: { value: "Full DLC support", status: "competitive" },
+                  steam: { value: "Full DLC support + bundles", status: "leading" },
+                  epic: { value: "DLC support", status: "competitive" }
+                },
+                {
+                  name: "Platform Economics (IAP, Consumables, Subscriptions)",
+                  id: "platformEcon",
+                  xbox: { value: "Full support (IAP, consumables, subs)", status: "competitive" },
+                  playstation: { value: "Full support (IAP, consumables, subs)", status: "competitive" },
+                  steam: { value: "Full support + marketplace", status: "leading" },
+                  epic: { value: "IAP & consumables (no subs)", status: "competitive" },
+                  expandable: true,
+                  details: {
+                    xbox: "Full in-app purchase support with Microsoft Store commerce. Consumables (virtual currency, items) fully supported. Subscription billing available for recurring payments. Integrated with Xbox Live for entitlement management.",
+                    playstation: "Full IAP support through PlayStation Store. Consumables supported for virtual goods. Subscription billing available. All transactions go through PSN commerce system.",
+                    steam: "Full IAP support plus unique Steam Marketplace for player-to-player trading of in-game items. Consumables supported. Subscription billing available. Marketplace creates additional monetization opportunities.",
+                    epic: "Full IAP support proven at scale with Fortnite. Consumables (V-Bucks model) well-established. Subscription billing not currently available for third-party games."
+                  }
+                },
+                {
+                  name: "Payment Instruments",
+                  id: "paymentInstruments",
+                  xbox: { value: "Cards, PayPal, gift cards, carrier billing", status: "competitive" },
+                  playstation: { value: "Cards, PayPal, gift cards, carrier billing", status: "competitive" },
+                  steam: { value: "100+ payment methods globally", status: "leading" },
+                  epic: { value: "Cards, PayPal, regional options", status: "competitive" },
+                  expandable: true,
+                  details: {
+                    xbox: "Credit/debit cards, PayPal, Microsoft/Xbox gift cards, Microsoft account balance, carrier billing in select regions. Microsoft Rewards points can be redeemed for store credit.",
+                    playstation: "Credit/debit cards, PayPal, PlayStation Store gift cards, PSN wallet, carrier billing in select regions. Regional payment options vary by country.",
+                    steam: "Industry-leading 100+ payment methods including credit/debit cards, PayPal, Alipay, WeChat Pay, Pix, iDEAL, Sofort, WebMoney, and dozens of regional options. Steam Wallet can be funded via many local methods. Key enabler for global reach.",
+                    epic: "Credit/debit cards, PayPal, Epic gift cards. Regional options including Pix (Brazil), UPI (India). Fewer options than Steam but covers major markets."
+                  },
+                  fullDetails: {
+                    title: "Complete Payment Methods List",
+                    content: `**Steam (100+ methods):**
+• Credit/Debit Cards: Visa, Mastercard, American Express, JCB, Discover
+• Digital Wallets: PayPal, Alipay, WeChat Pay, Skrill, WebMoney, Qiwi
+• Bank Transfers: iDEAL (Netherlands), Sofort/Klarna (Germany), Giropay, Przelewy24 (Poland), Trustly
+• Latin America: Pix (Brazil), OXXO (Mexico), Boleto (Brazil), MercadoPago
+• Asia Pacific: GCash (Philippines), GrabPay, Touch 'n Go (Malaysia), LINE Pay, Konbini (Japan)
+• Prepaid: Steam Wallet codes, Paysafecard, CashU, AstroPay
+• Carrier Billing: Select mobile carriers in 50+ countries
+• Cryptocurrency: Not directly supported
+
+**Xbox:**
+• Credit/Debit Cards: Visa, Mastercard, American Express, Discover
+• Digital Wallets: PayPal
+• Microsoft Balance: Xbox/Microsoft gift cards, Microsoft Rewards redemption
+• Carrier Billing: Select carriers in ~20 countries
+• Regional: Limited compared to Steam
+
+**PlayStation:**
+• Credit/Debit Cards: Visa, Mastercard, American Express, Discover
+• Digital Wallets: PayPal
+• PSN Wallet: PlayStation Store gift cards
+• Carrier Billing: Select carriers
+• Regional: Varies significantly by country
+
+**Epic:**
+• Credit/Debit Cards: Visa, Mastercard, American Express
+• Digital Wallets: PayPal
+• Regional: Pix (Brazil), UPI (India), Kakao Pay (Korea)
+• Gift Cards: Epic/Fortnite gift cards`
+                  }
+                },
+                {
+                  name: "Data and Analytics",
+                  xbox: { value: "Partner Center Insights", status: "opportunity" },
+                  playstation: { value: "PlayStation Partners analytics", status: "competitive" },
+                  steam: { value: "Steamworks analytics + public data", status: "leading" },
+                  epic: { value: "Epic Dev Portal analytics", status: "competitive" }
+                },
+                {
+                  name: "Gaming Services (Multiplayer, Voice, Chat)",
+                  id: "gamingServices",
+                  xbox: { value: "Xbox Live + PlayFab (modernizing)", status: "leading" },
+                  playstation: { value: "PSN services", status: "competitive" },
+                  steam: { value: "Steamworks multiplayer + voice", status: "competitive" },
+                  epic: { value: "EOS (free cross-platform)", status: "competitive" },
+                  expandable: true,
+                  details: {
+                    xbox: "Xbox Live provides social infrastructure (parties, clubs, LFG, achievements). PlayFab adds modern live-ops: real-time analytics, player segmentation, A/B testing, economy management, and cross-platform multiplayer. Together they form Xbox's evolving 'game services stack'—PlayFab is increasingly central to Xbox's developer value proposition.",
+                    playstation: "PSN provides multiplayer, voice chat, parties. Requires PS Plus for online multiplayer on console. Limited live-ops tooling compared to PlayFab.",
+                    steam: "Steamworks provides multiplayer matchmaking, voice chat, lobbies. Free for developers. No subscription required for players. Strong but less sophisticated live-ops than PlayFab.",
+                    epic: "Epic Online Services (EOS) provides free cross-platform multiplayer, voice, lobbies. Can be used on any platform. Competes directly with PlayFab for backend services."
+                  },
+                  fullDetails: {
+                    title: "Gaming Services & The PlayFab Strategy",
+                    content: `**🔑 PlayFab: Xbox's Modernization Play**
+
+PlayFab (acquired 2018) is becoming central to Xbox's developer strategy. While Xbox Live handles social/identity, PlayFab provides the modern backend services that live-service games need:
+
+**Why PlayFab Matters:**
+• Live-ops at scale: Powers Minecraft, Sea of Thieves, Forza, Rainbow Six Siege, and 5,000+ other games
+• Cross-platform by design: Works on PlayStation, Nintendo, Steam, mobile—not Xbox-exclusive
+• Competes with EOS: Both are vying to be the "AWS of gaming"
+• Developer lock-in: Once a game uses PlayFab, switching costs are high
+
+**PlayFab Core Services:**
+• Player Data: Cloud-hosted player profiles, inventory, progression
+• Economy: Virtual currencies, stores, trading, fraud detection
+• LiveOps: Real-time analytics, A/B testing, player segmentation, scheduled events
+• Multiplayer: Matchmaking, dedicated servers (Azure), lobbies, party systems
+• Content: Title data, CDN, file management
+• Insights: Real-time dashboards, custom reports, data export
+
+**Xbox Live + PlayFab Integration:**
+• Xbox Live handles: Identity, friends, achievements, clubs, LFG, parties, voice
+• PlayFab handles: Backend data, economy, matchmaking, analytics, live-ops
+• Together: Complete game services stack rivaling what EOS offers
+
+---
+
+**Xbox Live Services (Social Layer):**
+• Multiplayer: Dedicated servers, peer-to-peer, matchmaking, skill-based ranking
+• Voice Chat: Party chat, in-game voice, noise suppression, cross-platform
+• Social: Friends list, presence, activity feed, clubs (community groups)
+• Looking for Group (LFG): Built-in group finder for any game
+• Achievements: Gamerscore system, challenges, rewards
+• Cloud Saves: Automatic sync across devices
+• Game DVR: Capture, edit, share clips
+• Parental Controls: Industry-leading Family Settings app
+
+**PlayStation Network (PSN):**
+• Multiplayer: Dedicated servers, matchmaking (requires PS Plus on console)
+• Voice Chat: Party chat, in-game voice, screen share
+• Social: Friends, trophies, activity cards (PS5)
+• Communities: Being phased out/reduced
+• Cloud Saves: PS Plus required
+• Share Play: Let friends play your games remotely
+• Live-ops: Less sophisticated tooling—developers often use third-party backends
+
+**Steamworks:**
+• Multiplayer: Lobbies, matchmaking, dedicated server tools
+• Voice Chat: Steam Voice (in-game and overlay)
+• Social: Friends, groups, activity, rich presence
+• Workshop: Mod hosting and distribution
+• Cloud Saves: Free for all games
+• Broadcasting: Built-in streaming
+• Remote Play: Play local co-op online
+• Live-ops: Basic—many Steam games use PlayFab or custom backends
+
+**Epic Online Services (EOS):**
+• Multiplayer: Cross-platform lobbies, matchmaking, NAT traversal
+• Voice Chat: Cross-platform voice (relatively new)
+• Social: Friends, presence (cross-platform)
+• Anti-Cheat: Easy Anti-Cheat integration
+• Player Data: Cloud saves, stats, achievements
+• Key differentiator: Free to use on ANY platform (direct PlayFab competitor)
+• Used by: Fortnite, Fall Guys, Rocket League, many third-party games
+
+**Competitive Landscape:**
+• PlayFab vs EOS: Both want to be the default game backend
+• PlayFab advantage: Azure integration, mature analytics, 5,000+ games
+• EOS advantage: Free tier, Unreal Engine native, Fortnite proof point
+• Both are platform-agnostic—winning developers regardless of storefront`
+                  }
+                },
+                {
+                  name: "UGC (User Generated Content)",
+                  id: "ugc",
+                  xbox: { value: "Limited (select titles)", status: "opportunity" },
+                  playstation: { value: "Very limited", status: "opportunity" },
+                  steam: { value: "Steam Workshop (industry-leading)", status: "leading" },
+                  epic: { value: "Fortnite Creative / UEFN", status: "competitive" },
+                  expandable: true,
+                  details: {
+                    xbox: "No integrated UGC platform. Some titles like Minecraft have creator content. Opportunity: Build or partner for Xbox PC Store UGC solution.",
+                    playstation: "Very limited UGC due to console restrictions. Dreams offered creation tools but limited reach.",
+                    steam: "Steam Workshop is the gold standard: integrated hosting, one-click install, auto-updates, creator monetization. 50K+ mods for top titles.",
+                    epic: "Fortnite Creative and UEFN enable massive UGC ecosystem within Fortnite. Creator economy with revenue sharing. Not available for other games."
+                  },
+                  fullDetails: {
+                    title: "UGC Platform Details",
+                    content: `**Steam Workshop:**
+• Total items: Millions of mods, maps, skins across all games
+• Top games by mod count: Skyrim (50K+), Cities: Skylines (300K+), Rimworld (30K+), Garry's Mod (1M+ addons)
+• Features: One-click subscribe, auto-updates, collections, dependency management
+• Creator monetization: Paid mods (game-specific), donation links
+• Tools: Integrated SDK for developers to enable Workshop support
+
+**Epic - Fortnite Creative / UEFN:**
+• Fortnite Creative: In-game island builder, millions of islands created
+• UEFN (Unreal Editor for Fortnite): Full Unreal Engine access for Fortnite content
+• Creator Economy: Revenue sharing based on engagement time
+• Top creators: Earning millions annually from popular maps
+• Limitation: Only works within Fortnite ecosystem
+
+**Xbox:**
+• No universal UGC platform
+• Minecraft: Marketplace with paid creator content, Bedrock add-ons
+• Fallout 4/Skyrim: Creation Club (paid), limited free mods on console
+• Halo: Forge mode (built into game)
+• Opportunity: mod.io partnership or native Xbox Workshop
+
+**PlayStation:**
+• Dreams (Media Molecule): Full game creation tool, limited audience
+• Fallout 4/Skyrim: Very restricted mod support (no external assets)
+• LittleBigPlanet: Level sharing (franchise aging)
+• Console security model limits UGC possibilities`
+                  }
+                },
+                {
+                  name: "Mod Support",
+                  xbox: { value: "Limited (select titles only)", status: "opportunity" },
+                  playstation: { value: "Very limited (console restrictions)", status: "opportunity" },
+                  steam: { value: "Steam Workshop (50K+ mods)", status: "leading" },
+                  epic: { value: "None", status: "opportunity" }
+                },
+                {
+                  name: "Seller Tools & Merchandising",
+                  id: "sellerTools",
+                  xbox: { value: "Partner Center (analytics-focused)", status: "opportunity" },
+                  playstation: { value: "Limited self-service", status: "opportunity" },
+                  steam: { value: "Full self-service (discounts, visibility, analytics)", status: "leading" },
+                  epic: { value: "Editorial partnership model", status: "competitive" },
+                  expandable: true,
+                  details: {
+                    xbox: "Partner Center provides analytics (sales, engagement, Game Pass metrics) but limited self-service promotional tools. Discounts and featuring are more editorial/relationship-driven. Opportunity: Build self-service discount scheduling, targeted offers, and visibility tools.",
+                    playstation: "PlayStation Partners Portal offers analytics and sale participation, but featuring and visibility are largely editorial. Limited self-service promotional capabilities compared to Steam.",
+                    steam: "Industry-leading self-service: Developers control their own discounts, participate in sales, get visibility rounds for updates, send announcements to followers, and access comprehensive analytics. No paid placement—discovery is algorithmic.",
+                    epic: "Smaller catalog means more editorial attention per title. Developers work with Epic team for featuring and promotions. Less self-service, but more hands-on support. Free game program offers unique exposure."
+                  },
+                  fullDetails: {
+                    title: "Complete Seller Tools & Merchandising Comparison",
+                    content: `**🔑 What "Seller Tools" Really Means**
+
+Modern seller tools go beyond analytics to include everything developers need to actively sell and promote their games:
+
+**1. Promotional Tools** (Discounts, Sales)
+**2. Targeted Offers** (Segment-specific pricing)
+**3. Discovery/Visibility** (Featuring, placement)
+**4. Marketing** (Announcements, wishlist tools)
+**5. Analytics** (Sales, traffic, conversion)
+
+---
+
+**Steam (Industry-Leading Self-Service):**
+
+*Promotional Tools:*
+• Self-service discounts: Developers set their own sale prices anytime
+• Sale participation: Opt into seasonal sales (Summer, Winter, etc.)
+• Launch discount: Up to 40% off at launch
+• Discount cooldowns: 6-week minimum between discounts (prevents constant sales)
+• Custom sales: Create your own sale events
+
+*Visibility & Discovery:*
+• Visibility rounds: Automatic featuring when releasing updates
+• New release visibility: Algorithmic boost for new games
+• Tags and categories: Developer-controlled discoverability
+• NO paid placement: Discovery is merit/algorithm-based
+• Curators: 12K+ curators can feature your game
+
+*Marketing Tools:*
+• Announcements: Post updates to all followers
+• Wishlist notifications: Auto-email when game goes on sale
+• Community hub: Forums, guides, screenshots
+• Events: Participate in Next Fest, themed events
+• Store page A/B testing: Test capsules, descriptions
+
+*Analytics:*
+• Real-time sales dashboard
+• Wishlist tracking (adds, deletes, conversions)
+• Traffic sources with UTM support
+• Conversion funnels
+• Regional breakdowns
+• Refund data
+
+---
+
+**Xbox Partner Center:**
+
+*Promotional Tools:*
+• Discount requests through Partner Center (less self-service)
+• Sale participation: Xbox seasonal sales
+• Game Pass deals: Alternative monetization path
+• Limited self-service discount scheduling
+
+*Visibility & Discovery:*
+• Featuring is largely editorial
+• Relationship-driven placement
+• Game Pass catalog featuring
+• Limited algorithmic discovery tools
+
+*Marketing Tools:*
+• Basic announcement capabilities
+• Xbox Wire for major news
+• Limited direct-to-player marketing
+
+*Analytics:*
+• Sales dashboard (daily/weekly/monthly)
+• Acquisition reports
+• Game Pass engagement metrics
+• Regional breakdowns
+• Achievement/engagement data
+
+*Opportunity Areas:*
+• Self-service discount scheduling
+• Targeted offers (lapsed players, specific segments)
+• Visibility boost tools
+• A/B testing for store pages
+• Real-time analytics
+
+---
+
+**PlayStation Partners Portal:**
+
+*Promotional Tools:*
+• Sale participation through portal
+• Discount scheduling (limited self-service)
+• PS Plus catalog deals (negotiated)
+
+*Visibility & Discovery:*
+• Editorial featuring
+• State of Play exposure for select titles
+• PS Plus catalog placement
+
+*Marketing Tools:*
+• Limited direct marketing tools
+• Rely on PlayStation Blog for exposure
+
+*Analytics:*
+• Sales reports by region
+• Download tracking
+• PS Plus performance data
+• Trophy unlock rates
+
+---
+
+**Epic Games Store:**
+
+*Promotional Tools:*
+• Work with Epic team for sale pricing
+• Mega Sale participation
+• Free game program (huge exposure, upfront payment)
+
+*Visibility & Discovery:*
+• Curated store = more attention per title
+• Editorial featuring
+• Exclusive deals bring marketing support
+
+*Marketing Tools:*
+• Epic handles much of the promotion
+• Social media amplification for partners
+
+*Analytics:*
+• Sales dashboard
+• Regional data
+• Basic traffic sources
+• Wishlist metrics
+
+---
+
+**Key Insight:**
+Steam's self-service model gives developers maximum control but requires them to do the work. Epic's editorial model provides more support but less autonomy. Xbox sits in between but leans editorial—opportunity to build more self-service tools that give developers control while leveraging unique Game Pass data for targeted offers.`
+                  }
+                },
+                {
+                  name: "No-Account Gameplay Experiences",
+                  xbox: { value: "Guest accounts supported", status: "competitive" },
+                  playstation: { value: "Guest accounts supported", status: "competitive" },
+                  steam: { value: "Account required", status: "opportunity" },
+                  epic: { value: "Account required", status: "opportunity" }
+                },
+                {
+                  name: "Monthly Active Users",
+                  id: "userbase",
+                  xbox: { value: "100M+ (Xbox ecosystem)", status: "competitive" },
+                  playstation: { value: "120M+ PSN MAU", status: "leading" },
+                  steam: { value: "132M MAU (PC dominant)", status: "leading" },
+                  epic: { value: "75M MAU", status: "competitive" },
+                  expandable: true,
+                  details: {
+                    xbox: "100M+ monthly active users across Xbox console + PC + cloud. Game Pass: 34M+ subscribers. Strong engagement with Game Pass users playing 40% more games.",
+                    playstation: "120M+ PSN monthly active users. PS Plus: ~47M subscribers across tiers. PS5 sold 86M+ units.",
+                    steam: "132M monthly active users. 41.8M peak concurrent users (Jan 2026). 50,000+ games available.",
+                    epic: "75M monthly active users. Fortnite accounts for significant portion. 200M+ accounts claimed free games."
+                  }
+                },
+                {
+                  name: "Subscription Service",
+                  id: "gamepass",
+                  xbox: { value: "Game Pass (34M+ subs)", status: "leading" },
+                  playstation: { value: "PS Plus (47M subs, 3 tiers)", status: "leading" },
+                  steam: { value: "No subscription (ownership model)", status: "competitive" },
+                  epic: { value: "No subscription", status: "opportunity" },
+                  expandable: true,
+                  details: {
+                    xbox: "Game Pass tiers: Core ($9.99/mo), Standard ($14.99/mo), Ultimate ($19.99/mo - PC + Console + Cloud + EA Play). Day-one first-party releases. 400+ games.",
+                    playstation: "PS Plus tiers: Essential ($59.99/yr), Extra ($134.99/yr - 400+ game catalog), Premium ($159.99/yr - classics, trials, cloud).",
+                    steam: "No subscription model. Steam believes in ownership. Sales events drive purchases.",
+                    epic: "No subscription. Weekly free game giveaways ($2,500+ value annually)."
+                  },
+                  fullDetails: {
+                    title: "Subscription Service Comparison",
+                    content: `**Xbox Game Pass:**
+• Core ($9.99/mo): Online multiplayer, limited catalog (~25 games), member discounts
+• Standard ($14.99/mo): Full catalog (400+ games), online multiplayer, member deals
+• Ultimate ($19.99/mo): Console + PC + Cloud, EA Play included, Riot Games benefits, day-one first-party
+• PC Game Pass ($11.99/mo): PC-only version of Standard
+• Key differentiator: ALL first-party games day-one (Starfield, Forza, Halo, etc.)
+• Developer deals: Upfront payment + usage royalties
+
+**PlayStation Plus:**
+• Essential ($59.99/yr): Online multiplayer, 2-3 monthly games to keep, cloud saves, exclusive discounts
+• Extra ($134.99/yr): Essential + 400+ game catalog (not day-one first-party)
+• Premium ($159.99/yr): Extra + classic games (PS1/PS2/PSP), game trials, cloud streaming
+• First-party timing: Major exclusives added months after release (not day-one)
+• Game Catalog highlights: Spider-Man, God of War, Returnal, Death Stranding
+
+**Steam (No Subscription):**
+• Philosophy: Players own their games permanently
+• Alternative model: Deep discounts during sales (50-90% off)
+• Steam Deck: Hardware play driving engagement
+• EA Play, Ubisoft+ available separately on Steam
+
+**Epic (No Subscription):**
+• Weekly free games: 100+ games given away since 2018
+• Notable freebies: GTA V, Civilization VI, Control, Death Stranding
+• Estimated value: $2,500+/year in free games
+• Rumored: Potential subscription in future`
+                  }
+                },
+                {
+                  name: "Geographic Availability",
+                  id: "geography",
+                  xbox: { value: "75+ countries", status: "opportunity" },
+                  playstation: { value: "~70 countries", status: "opportunity" },
+                  steam: { value: "195+ countries (near-global)", status: "leading" },
+                  epic: { value: "140+ countries", status: "competitive" },
+                  expandable: true,
+                  details: {
+                    xbox: "Available in 75+ countries. Strong in North America, Western Europe, Australia, Japan. Growing in Latin America, Middle East. Opportunity: 100+ additional countries where Steam operates.",
+                    playstation: "Available in ~70 countries. Very strong in Japan, North America, Western Europe, Australia.",
+                    steam: "Near-global at 195+ countries. Regional pricing in almost all markets. Strong CIS presence.",
+                    epic: "140+ countries. Growing rapidly in Southeast Asia, Latin America, Middle East."
+                  },
+                  fullDetails: {
+                    title: "Complete Geographic Breakdown",
+                    content: `**Steam (195+ countries):**
+• North America: USA, Canada, Mexico
+• Europe: All EU countries, UK, Switzerland, Norway, Eastern Europe, Balkans, CIS (Russia, Ukraine, Kazakhstan, etc.)
+• Asia Pacific: Japan, South Korea, China (via Steam China/Perfect World), Taiwan, Hong Kong, Southeast Asia (all countries), Australia, New Zealand, India
+• Latin America: All countries including Brazil, Argentina, Chile, Colombia, Peru
+• Middle East: UAE, Saudi Arabia, Israel, Turkey, all Gulf states
+• Africa: South Africa, Egypt, Nigeria, Kenya, Morocco, 40+ other countries
+• Only excluded: North Korea, some sanctioned regions
+
+**Xbox (75+ countries):**
+• Strong: USA, Canada, UK, Germany, France, Australia, Japan, Mexico, Brazil
+• Available: Most of Western Europe, select Latin America, select Middle East
+• Limited/No presence: Most of Africa (except South Africa), Central Asia, many Southeast Asian countries, Pacific Islands
+• Gap vs Steam: ~120 countries
+
+**PlayStation (~70 countries):**
+• Very strong: Japan, USA, Canada, UK, Germany, France, Australia
+• Available: Western Europe, select Latin America, select Asia
+• Similar gaps to Xbox in Africa, Central Asia, smaller markets
+
+**Epic (140+ countries):**
+• Strong: North America, Western Europe, Brazil, Australia
+• Growing: Southeast Asia, Latin America, Middle East, India
+• Gap vs Steam: ~55 countries, but covers most high-value markets`
+                  }
+                }
+              ]
+            },
+            {
+              id: "discovery",
+              name: "Discovery",
+              icon: "🔍",
+              opportunity: "Game Pass data is unique asset for ML recommendations; PDP and pre-release marketing improvements in progress",
+              features: [
+                {
+                  name: "User Reviews",
+                  id: "reviewsDiscovery",
+                  xbox: { value: "Star ratings only (Microsoft Store)", status: "opportunity" },
+                  playstation: { value: "Star ratings + written reviews", status: "competitive" },
+                  steam: { value: "Written reviews + voting (gold standard)", status: "leading" },
+                  epic: { value: "Star ratings (OpenCritic integration)", status: "competitive" },
+                  expandable: true,
+                  details: {
+                    xbox: "Basic 5-star rating system. No written reviews on console store. Opportunity: Add written reviews with verified purchase badges, helpfulness voting.",
+                    playstation: "Star ratings with optional written reviews. Verified purchase indicators. Less engagement than Steam.",
+                    steam: "Industry gold standard: Written reviews, helpful/not helpful voting, review score over time graphs, curator reviews, Steam Labs experiments.",
+                    epic: "Basic star ratings. OpenCritic integration for professional reviews. Polling system for quick feedback."
+                  }
+                },
+                {
+                  name: "Recommendation Algorithm",
+                  xbox: { value: "Basic suggestions + Game Pass tiles", status: "opportunity" },
+                  playstation: { value: "PS Store recommendations", status: "competitive" },
+                  steam: { value: "Discovery Queue + ML recommendations", status: "leading" },
+                  epic: { value: "Basic storefronts", status: "opportunity" }
+                },
+                {
+                  name: "Pre-Release Marketing",
+                  id: "preRelease",
+                  xbox: { value: "Wishlist + coming soon", status: "competitive" },
+                  playstation: { value: "Wishlist + notifications", status: "competitive" },
+                  steam: { value: "Wishlist + sale notifications + follow + events", status: "leading" },
+                  epic: { value: "Wishlist + notifications", status: "competitive" },
+                  expandable: true,
+                  details: {
+                    xbox: "Wishlist functionality with notifications. Coming soon section. Pre-order support. Opportunity: Enhanced visibility tools for developers.",
+                    playstation: "Wishlist with notifications. Pre-order support. State of Play showcases for major titles.",
+                    steam: "Comprehensive pre-release: Wishlists with sale notifications, Follow for updates, Next Fest demos, seasonal events, developer livestreams, email notifications to wishlisters.",
+                    epic: "Wishlist with notifications. Pre-order support. Exclusive reveals during showcases."
+                  }
+                },
+                {
+                  name: "Post-Release Game Discovery",
+                  xbox: { value: "Game Pass featured tiles", status: "competitive" },
+                  playstation: { value: "PS Store featured + PS Plus", status: "competitive" },
+                  steam: { value: "Discovery Queue + Similar games + Curators", status: "leading" },
+                  epic: { value: "Editorial features + free games", status: "competitive" }
+                },
+                {
+                  name: "PDP (Product Detail Page) Features",
+                  id: "pdp",
+                  xbox: { value: "Standard PDP", status: "opportunity" },
+                  playstation: { value: "Game hubs with trailers", status: "competitive" },
+                  steam: { value: "Rich PDP (reviews, guides, screenshots, Workshop)", status: "leading" },
+                  epic: { value: "Basic PDP", status: "opportunity" },
+                  expandable: true,
+                  details: {
+                    xbox: "Standard product pages with screenshots, trailers, description. Opportunity: Add community content, guides, enhanced media.",
+                    playstation: "Game hubs with trailers, screenshots, DLC listings. Activity cards on PS5 for quick access.",
+                    steam: "Industry-leading PDP: User reviews, community guides, screenshots, videos, Workshop mods, discussions, curator reviews, DLC listings, trading cards info.",
+                    epic: "Basic product pages with screenshots, trailers, description. Limited community features."
+                  }
+                },
+                {
+                  name: "Playtesting / Pre-Release Flighting",
+                  xbox: { value: "Xbox Insider Hub", status: "competitive" },
+                  playstation: { value: "Limited (beta codes)", status: "opportunity" },
+                  steam: { value: "Steam Playtest (free beta tool)", status: "leading" },
+                  epic: { value: "Manual key distribution", status: "opportunity" }
+                },
+                {
+                  name: "Content Isolation",
+                  xbox: { value: "N/A", status: "opportunity" },
+                  playstation: { value: "N/A", status: "opportunity" },
+                  steam: { value: "N/A", status: "opportunity" },
+                  epic: { value: "N/A", status: "opportunity" }
+                },
+                {
+                  name: "Curator / Influencer Tools",
+                  xbox: { value: "Creator program (limited)", status: "opportunity" },
+                  playstation: { value: "Limited creator tools", status: "opportunity" },
+                  steam: { value: "Steam Curators (12K+ curators)", status: "leading" },
+                  epic: { value: "Support-A-Creator (Fortnite-focused)", status: "competitive" }
+                },
+                {
+                  name: "Free-to-Play Support",
+                  xbox: { value: "F2P no Gold required (since 2021)", status: "competitive" },
+                  playstation: { value: "F2P no PS Plus required", status: "competitive" },
+                  steam: { value: "Full F2P support", status: "competitive" },
+                  epic: { value: "F2P native (Fortnite heritage)", status: "leading" }
+                }
+              ]
+            },
+            {
+              id: "release",
+              name: "Release",
+              icon: "🚀",
+              opportunity: "Trusted developer fast-track could close speed gap while maintaining quality reputation",
+              features: [
+                {
+                  name: "Content Certification",
+                  id: "certification",
+                  xbox: { value: "Mandatory cert (quality guarantee)", status: "leading" },
+                  playstation: { value: "Mandatory cert (similar to Xbox)", status: "leading" },
+                  steam: { value: "Minimal review (speed over curation)", status: "competitive" },
+                  epic: { value: "Curated selection", status: "competitive" },
+                  expandable: true,
+                  details: {
+                    xbox: "Full certification testing required. Submit build → Technical review → Functionality testing → Compliance check → Approval. Timeline: 1-3 weeks for new titles, 3-7 days for patches.",
+                    playstation: "Similar mandatory certification to Xbox. Timeline: 1-3 weeks typically. TRC requirements, IARC/PEGI/ESRB ratings.",
+                    steam: "Near-instant for trusted developers. New developers may wait 1-3 days. Basic content policy compliance check. Relies on user reviews and refunds.",
+                    epic: "Curated store with guideline compliance review. 3-7 days typical. Smaller catalog means more attention per title."
+                  },
+                  fullDetails: {
+                    title: "Certification Requirements & Process",
+                    content: `**Xbox Certification (XR - Xbox Requirements):**
+• Technical Requirements: Performance targets, memory management, suspend/resume, Quick Resume support
+• Xbox Live Integration: Achievements, presence, multiplayer compliance
+• Accessibility: Required features (text-to-speech, UI scaling, colorblind options encouraged)
+• Content Policies: Age ratings (IARC), regional compliance
+• Process: Submit via Partner Center → Automated tests → Manual testing → Results in 5-10 business days
+• Patch certification: 3-7 days, expedited option for critical fixes
+• Failure: Detailed report, fix and resubmit
+
+**PlayStation Certification (TRC - Technical Requirements Checklist):**
+• Technical Requirements: Performance, memory, save data handling, Activity Cards (PS5)
+• PSN Integration: Trophies, online features compliance
+• Content: Age ratings, regional requirements
+• Process: Submit via PlayStation Partners → Testing → ~1-3 weeks
+• Similar rigor to Xbox
+
+**Steam (Minimal Review):**
+• Content review: Basic policy check (no illegal content, malware)
+• Build review: ~1-3 days for new developers, near-instant for established
+• No technical certification: Relies on user reviews, refunds to surface issues
+• Steamworks review: API usage check
+• Trade-off: Speed vs quality assurance
+
+**Epic (Curated):**
+• Application required: Not all games accepted
+• Content guidelines: Family-friendly to mature, no prohibited content
+• Technical review: Basic functionality
+• Timeline: 3-7 days typical
+• Curation focus: Quality over quantity (smaller catalog)`
+                  }
+                },
+                {
+                  name: "Time to Publish (New Title)",
+                  xbox: { value: "1-3 weeks (cert required)", status: "opportunity" },
+                  playstation: { value: "1-3 weeks (cert required)", status: "opportunity" },
+                  steam: { value: "1-3 days (minimal review)", status: "leading" },
+                  epic: { value: "3-7 days (curated)", status: "competitive" }
+                },
+                {
+                  name: "Patch Deployment",
+                  xbox: { value: "3-7 days (cert for updates)", status: "opportunity" },
+                  playstation: { value: "3-7 days (cert for updates)", status: "opportunity" },
+                  steam: { value: "Instant (dev-controlled)", status: "leading" },
+                  epic: { value: "Instant (dev-controlled)", status: "leading" }
+                },
+                {
+                  name: "Early Access / Preview",
+                  xbox: { value: "Xbox Game Preview", status: "opportunity" },
+                  playstation: { value: "Limited (no formal program)", status: "opportunity" },
+                  steam: { value: "Steam Early Access (industry standard)", status: "leading" },
+                  epic: { value: "Early Access supported", status: "competitive" }
+                },
+                {
+                  name: "Beta/Demo Distribution",
+                  xbox: { value: "Xbox Insider Hub", status: "competitive" },
+                  playstation: { value: "PS Store demos, beta codes", status: "competitive" },
+                  steam: { value: "Steam Playtest (free beta tool)", status: "leading" },
+                  epic: { value: "Manual key distribution", status: "opportunity" }
+                }
+              ]
+            },
+            {
+              id: "security",
+              name: "Security",
+              icon: "🛡️",
+              opportunity: "Console security is a key differentiator—position as quality and safety guarantee",
+              features: [
+                {
+                  name: "Parental Controls",
+                  xbox: { value: "Industry-leading Family Settings app", status: "leading" },
+                  playstation: { value: "Comprehensive parental controls", status: "competitive" },
+                  steam: { value: "Family View (basic)", status: "competitive" },
+                  epic: { value: "Parental controls available", status: "competitive" }
+                },
+                {
+                  name: "Anti-Cheat Integration",
+                  xbox: { value: "Xbox Live enforcement + TruePlay", status: "leading" },
+                  playstation: { value: "PSN enforcement", status: "competitive" },
+                  steam: { value: "VAC (Valve Anti-Cheat)", status: "competitive" },
+                  epic: { value: "Easy Anti-Cheat (owned by Epic)", status: "competitive" }
+                },
+                {
+                  name: "Fraud Protection",
+                  xbox: { value: "Enterprise-grade (Microsoft backbone)", status: "leading" },
+                  playstation: { value: "Sony financial services integration", status: "competitive" },
+                  steam: { value: "Steam Guard + trade holds", status: "competitive" },
+                  epic: { value: "2FA required for free games", status: "competitive" }
+                },
+                {
+                  name: "Account Security",
+                  xbox: { value: "Microsoft Account (2FA, passkeys)", status: "leading" },
+                  playstation: { value: "PSN 2FA", status: "competitive" },
+                  steam: { value: "Steam Guard (mobile authenticator)", status: "competitive" },
+                  epic: { value: "2FA (required for some features)", status: "competitive" }
+                }
+              ]
+            },
+            {
+              id: "experience",
+              name: "Player Experience",
+              icon: "🎮",
+              opportunity: "Xbox store lacks Steam's personalization and dynamic bundles—leverage Game Pass data for better discovery and consider 'complete the set' pricing",
+              features: [
+                {
+                  name: "Store Discovery",
+                  id: "storeDiscovery",
+                  xbox: { value: "Curated + basic personalization", status: "opportunity" },
+                  playstation: { value: "Polished, highly curated", status: "competitive" },
+                  steam: { value: "AI-powered personalization + community", status: "leading" },
+                  epic: { value: "Minimalist, editorial picks only", status: "opportunity" },
+                  expandable: true,
+                  details: {
+                    xbox: "Curated storefront with featured banners. Some personalization via 'Recommended for you' based on play history, but overall more editorial than algorithmic. Shows friend activity. Unified store for Xbox console and Windows PC.",
+                    playstation: "Premium curated experience with big artwork and trailers for marquee games. Minimal personalization—largely the same featured content for all users. Recently added basic star ratings but no text reviews.",
+                    steam: "Highly personalized and community-driven. Discovery Queue, 'More Like This', and Interactive Recommender use AI to surface games based on library, wishlists, playtime, and similar users. 50K+ game catalog navigable via deep tagging system.",
+                    epic: "Clean but basic storefront. Large banners for select releases, free game of the week, and sales. No advanced personalization—store is one-size-fits-all. Discovery driven by editorial picks and exclusives."
+                  }
+                },
+                {
+                  name: "User Reviews",
+                  id: "reviews",
+                  xbox: { value: "Star ratings only (no text)", status: "opportunity" },
+                  playstation: { value: "Star ratings (recently added)", status: "opportunity" },
+                  steam: { value: "Written reviews + voting + graphs", status: "leading" },
+                  epic: { value: "Opt-in star ratings (limited)", status: "opportunity" },
+                  expandable: true,
+                  details: {
+                    xbox: "No equivalent to Steam's user review system on store pages. Users can rate games with stars in the Xbox app, but these aren't prominent or widely used. Relies on external reviews for social proof.",
+                    playstation: "Until recently, no user ratings at all. Now has a web-based star rating system where verified owners can rate games, but no written reviews. Clean look prioritized over user commentary.",
+                    steam: "Industry gold standard. Written reviews with helpful/not helpful voting, review score graphs over time, curator reviews, and Steam Labs experiments. 'Recent Reviews' vs 'All Reviews' shows current game state.",
+                    epic: "No traditional user reviews. Uses opt-in rating system where random subset of players give 1-5 stars and answer polls. Avoids review bombing but lacks detailed pros/cons feedback."
+                  }
+                },
+                {
+                  name: "Bundle Pricing",
+                  id: "bundles",
+                  xbox: { value: "Fixed bundles (no partial credit)", status: "opportunity" },
+                  playstation: { value: "Fixed bundles (blocks if you own items)", status: "opportunity" },
+                  steam: { value: "'Complete the Set' dynamic pricing", status: "leading" },
+                  epic: { value: "Hard bundles only (on roadmap)", status: "opportunity" },
+                  expandable: true,
+                  details: {
+                    xbox: "Fixed-price bundles with no dynamic pricing. If a bundle contains a game you already own, the store usually blocks purchase to avoid duplicates. No partial discounts.",
+                    playstation: "Static bundles with no partial ownership adjustment. If you own any item in a bundle, you usually cannot purchase it at all. Store notes 'Already purchased' and prevents transaction.",
+                    steam: "Flexible 'Complete the Set' bundles since 2016. Price automatically reduced if you own some items—you only pay for what you don't have while keeping the bundle discount.",
+                    epic: "Only supports 'hard bundles' as of 2026. Owning part of content doesn't reduce bundle price. Been on Epic's roadmap since 2019 but not implemented."
+                  }
+                },
+                {
+                  name: "Sales & Discounts",
+                  id: "sales",
+                  xbox: { value: "Weekly deals + seasonal sales (matches Steam)", status: "competitive" },
+                  playstation: { value: "Aggressive sales rival Steam", status: "competitive" },
+                  steam: { value: "Constant deals + legendary seasonal sales", status: "leading" },
+                  epic: { value: "Big sales + coupons + weekly free games", status: "competitive" },
+                  expandable: true,
+                  details: {
+                    xbox: "Now nearly matches Steam's discount frequency. Weekly 'Deals with Gold' for subscribers plus general deals. Big seasonal sales with 50-75% off games >1 year old. Microsoft Rewards points add effective rebates.",
+                    playstation: "Transformed into discount-heavy marketplace. Weekly deals with extra % off for PS Plus members. Major seasonal events see 50-80% off hundreds of titles.",
+                    steam: "Pioneered large-scale seasonal sales with 50-90% off thousands of games. Summer and Winter Sales are cultural events. Platform trains users to wishlist and wait for sales.",
+                    epic: "Fewer continuous promotions but high-impact events. Annual Epic Mega Sale with 75% off plus coupons. Weekly free games are the standout—100+ free games since launch."
+                  },
+                  fullDetails: {
+                    title: "Complete Sales Events Calendar",
+                    content: `**Steam Sales Calendar:**
+• Steam Spring Sale: March/April (1 week)
+• Steam Summer Sale: June/July (2 weeks) - Largest event
+• Steam Autumn Sale: November (1 week, around US Thanksgiving)
+• Steam Winter Sale: December/January (2 weeks) - Second largest
+• Midweek Madness: Every Tuesday/Wednesday
+• Weekend Deals: Every Thursday-Monday
+• Publisher Sales: Frequent (e.g., "Ubisoft Publisher Sale")
+• Themed Sales: Horror (Halloween), Survival, Racing, etc.
+• Discounts: Typically 50-90% off, some games 95% off
+
+**Xbox Sales Events:**
+• Spring Sale: March/April
+• Summer Sale: July
+• Black Friday Sale: November
+• Winter/Holiday Sale: December
+• Weekly Deals with Gold: Every Tuesday (Game Pass/Gold members)
+• Publisher Spotlight Sales: Regular
+• Game Pass member discount: Extra 10% off catalog games
+• Microsoft Rewards: Points → store credit
+
+**PlayStation Sales:**
+• Days of Play: May/June (major annual event)
+• Summer Sale: July/August
+• Black Friday Sale: November
+• Holiday Sale: December/January
+• Weekly Deals: Every Wednesday
+• PS Plus member discount: Extra % off select titles
+• Double Discounts: PS Plus exclusive deeper cuts
+
+**Epic Games Store:**
+• Epic Mega Sale: May/June (biggest event)
+  - 75% off + $10 coupon (unlimited use on $15+ purchases)
+  - Epic Rewards: 5% back (20% during sale)
+• Holiday Sale: December
+  - Similar coupon mechanics
+• Weekly Free Games: Every Thursday
+  - 100+ free games given away since 2018
+  - Notable: GTA V (2020), Civilization VI, Control, NBA 2K21`
+                  }
+                },
+                {
+                  name: "Digital Wallet",
+                  id: "wallet",
+                  xbox: { value: "Unified Microsoft balance (cross-ecosystem)", status: "leading" },
+                  playstation: { value: "PSN Wallet (console-focused)", status: "competitive" },
+                  steam: { value: "Steam Wallet + marketplace earnings", status: "leading" },
+                  epic: { value: "Epic account balance + 5% rewards", status: "competitive" },
+                  expandable: true,
+                  details: {
+                    xbox: "Microsoft account balance shared across Xbox, Windows, and Microsoft Store. Add funds via Xbox Gift Cards or Microsoft Rewards points. Same balance can buy games, apps, subscriptions, even hardware.",
+                    playstation: "PSN Wallet tied to user's account. Fund via PlayStation Store Gift Cards or credit card. Region-specific cards.",
+                    steam: "Steam Wallet is pure store currency. Unique feature: players can earn wallet funds by selling in-game items or trading cards on Community Market.",
+                    epic: "Epic account balance introduced 2021. Add funds via Epic/Fortnite gift cards. Epic Rewards gives 5% back on every purchase as store credit."
+                  }
+                },
+                {
+                  name: "Community Features",
+                  xbox: { value: "Xbox Live social + clubs", status: "competitive" },
+                  playstation: { value: "PSN social (basic)", status: "competitive" },
+                  steam: { value: "Forums, guides, screenshots, Workshop", status: "leading" },
+                  epic: { value: "Minimal (friends list only)", status: "opportunity" }
+                },
+                {
+                  name: "Refund Policy",
+                  xbox: { value: "Case-by-case (less clear)", status: "opportunity" },
+                  playstation: { value: "Limited (14 days, no download)", status: "opportunity" },
+                  steam: { value: "Full refund <2 hours played", status: "leading" },
+                  epic: { value: "Matches Steam (<2 hours)", status: "competitive" }
+                }
+              ]
+            }
+          ]
+        };
+
+/* ============================================================================
+   UI COMPONENTS - DO NOT EDIT UNLESS CHANGING FUNCTIONALITY
+   ============================================================================
+   
+   The code below renders the dashboard UI. Edit the DATA section above
+   to change content. Only edit below if you need to change how the
+   dashboard looks or behaves.
+   
+   ============================================================================ */
+
+        // Status badge component with icons for accessibility
+        const StatusBadge = ({ status }) => {
+          const configs = {
+            leading: { bg: "bg-emerald-500/20", text: "text-emerald-400", label: "Leading", icon: "★" },
+            competitive: { bg: "bg-amber-500/20", text: "text-amber-400", label: "Competitive", icon: "●" },
+            opportunity: { bg: "bg-blue-500/20", text: "text-blue-400", label: "Opportunity", icon: "△" }
+          };
+          const c = configs[status] || configs.competitive;
+          return (
+            <span className={`${c.bg} ${c.text} px-2 py-0.5 rounded text-xs font-medium inline-flex items-center gap-1`}>
+              <span>{c.icon}</span>
+              {c.label}
+            </span>
+          );
+        };
+
+        // Modal component
+        const Modal = ({ isOpen, onClose, title, children }) => {
+          if (!isOpen) return null;
+          return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
+              <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+              <div 
+                className="relative bg-slate-900 rounded-2xl border border-slate-700 max-w-2xl w-full max-h-[80vh] overflow-auto shadow-2xl"
+                onClick={e => e.stopPropagation()}
+              >
+                <div className="sticky top-0 bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-white">{title}</h3>
+                  <button onClick={onClose} className="text-slate-400 hover:text-white text-xl">×</button>
+                </div>
+                <div className="p-6">
+                  {children}
+                </div>
+              </div>
+            </div>
+          );
+        };
+
+        // Full Details Section component (collapsible)
+        const FullDetailsSection = ({ fullDetails }) => {
+          const [isExpanded, setIsExpanded] = useState(false);
+          
+          // Parse markdown-style formatting
+          const formatContent = (content) => {
+            return content.split('\n').map((line, i) => {
+              // Bold text
+              line = line.replace(/\*\*(.+?)\*\*/g, '<strong class="text-white">$1</strong>');
+              // Bullet points
+              if (line.startsWith('• ')) {
+                return <div key={i} className="ml-4 text-slate-400 text-sm" dangerouslySetInnerHTML={{ __html: line }} />;
+              }
+              // Empty lines
+              if (line.trim() === '') {
+                return <div key={i} className="h-2" />;
+              }
+              return <div key={i} className="text-slate-300 text-sm" dangerouslySetInnerHTML={{ __html: line }} />;
+            });
+          };
+          
+          return (
+            <div className="border-t border-slate-700/50 pt-4 mt-4">
+              <button 
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors w-full"
+              >
+                <span className={`transform transition-transform ${isExpanded ? 'rotate-90' : ''}`}>▶</span>
+                <span className="text-sm font-medium">{fullDetails.title || 'Full Details'}</span>
+              </button>
+              
+              {isExpanded && (
+                <div className="mt-3 bg-slate-800/30 rounded-lg p-4 border border-slate-700/30 fade-in">
+                  {formatContent(fullDetails.content)}
+                </div>
+              )}
+            </div>
+          );
+        };
+
+        // Executive Summary Component
+        const ExecutiveSummary = ({ activeCategory, onPriorityClick }) => {
+          const isPlayerExperience = activeCategory === "experience";
+          const priorities = tabPriorities[activeCategory] || [];
+          const categoryNames = { tools: "Developer Experiences", growth: "Growth", discovery: "Discovery", release: "Release", security: "Security", experience: "Player Experience" };
+          const title = (categoryNames[activeCategory] || "Platform") + " Priorities";
+          const accentColor = isPlayerExperience ? "from-amber-500 to-amber-700" : "from-emerald-500 to-emerald-700";
+          
+          return (
+            <section className="mb-8 fade-in" key={activeCategory}>
+              <div className="flex items-center gap-3 mb-4">
+                <div className={`w-1 h-6 bg-gradient-to-b ${accentColor} rounded-full`} />
+                <h2 className="text-base font-semibold tracking-wide text-slate-300 uppercase">{title}</h2>
+                <span className="text-xs text-slate-500 ml-2">Click for rationale</span>
+              </div>
+              
+              <div className="grid md:grid-cols-3 gap-4">
+                {priorities.map((priority) => (
+                  <div 
+                    key={priority.number} 
+                    className={`bg-slate-800/30 rounded-xl p-4 border border-slate-700/50 cursor-pointer transition-all hover:border-${isPlayerExperience ? 'amber' : 'emerald'}-500/50 hover:bg-slate-800/50`}
+                    onClick={() => onPriorityClick(priority, isPlayerExperience, categoryNames[activeCategory])}
+                  >
+                    <div className="flex items-center justify-between mb-1.5">
+                      <div className={`${isPlayerExperience ? 'text-amber-400' : 'text-emerald-400'} text-xs font-semibold`}>
+                        Priority {priority.number}
+                      </div>
+                      <span className={`${isPlayerExperience ? 'text-amber-400' : 'text-emerald-400'} text-xs bg-${isPlayerExperience ? 'amber' : 'emerald'}-500/10 px-1.5 py-0.5 rounded-full`}>
+                        ⊕
+                      </span>
+                    </div>
+                    <h4 className="text-white font-medium text-sm mb-2">{priority.title}</h4>
+                    <p className="text-slate-400 text-xs leading-relaxed">
+                      {priority.description}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </section>
+          );
+        };
+
+        // Main Dashboard Component
+        function ComparisonDashboard() {
+          const [activeCategory, setActiveCategory] = useState("tools");
+          const [modalContent, setModalContent] = useState(null);
+          const [priorityModal, setPriorityModal] = useState(null);
+          
+          const activeData = comparisonData.categories.find(c => c.id === activeCategory);
+          const isPlayerExperience = activeCategory === "experience";
+          
+          const openModal = (feature) => {
+            if (feature.expandable && feature.details) {
+              setModalContent(feature);
+            }
+          };
+          
+          const openPriorityModal = (priority, isPlayer, categoryName) => {
+            setPriorityModal({ ...priority, isPlayer, categoryName });
+          };
+          
+          return (
+            <div className="min-h-screen bg-slate-950 text-white">
+              {/* Subtle gradient background */}
+              <div className="fixed inset-0 bg-gradient-to-br from-emerald-950/20 via-transparent to-blue-950/10 pointer-events-none" />
+              
+              {/* Header */}
+              <header className="relative border-b border-slate-800/80 bg-slate-900/50 backdrop-blur-sm">
+                <div className="max-w-7xl mx-auto px-6 py-5">
+                  <div className="flex items-center justify-between flex-wrap gap-4">
+                    <div className="flex items-center gap-4">
+                      <div className="w-11 h-11 bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-900/30">
+                        <span className="text-white font-bold text-lg">X</span>
+                      </div>
+                      <div>
+                        <h1 className="text-xl font-light tracking-tight">
+                          <span className="text-emerald-400 font-semibold">Xbox</span>
+                          <span className="text-slate-400 ml-2">Platform Comparison</span>
+                        </h1>
+                        <p className="text-slate-500 text-xs mt-0.5 tracking-wide">Competitive Landscape Analysis — 2026</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 text-xs">
+                      <span className="flex items-center gap-1.5"><span className="text-emerald-400">★</span> Leading</span>
+                      <span className="flex items-center gap-1.5"><span className="text-amber-400">●</span> Competitive</span>
+                      <span className="flex items-center gap-1.5"><span className="text-blue-400">△</span> Opportunity</span>
+                    </div>
+                  </div>
+                </div>
+              </header>
+
+              <main className="relative max-w-7xl mx-auto px-6 py-6">
+                {/* Dynamic Executive Summary */}
+                <ExecutiveSummary activeCategory={activeCategory} onPriorityClick={openPriorityModal} />
+
+                {/* Platform Metrics */}
+                <section className="mb-6">
+                  <div className="grid grid-cols-4 gap-3">
+                    <div className="bg-gradient-to-br from-emerald-900/40 to-emerald-900/20 rounded-lg p-4 border border-emerald-500/20">
+                      <div className="text-emerald-400 text-xs font-medium mb-0.5">Xbox MAU</div>
+                      <div className="text-2xl font-bold text-white">100M+</div>
+                      <div className="text-slate-500 text-xs">Console + PC + Cloud</div>
+                    </div>
+                    <div className="bg-gradient-to-br from-slate-800/60 to-slate-800/40 rounded-lg p-4 border border-slate-700/50">
+                      <div className="text-slate-400 text-xs font-medium mb-0.5">Steam MAU</div>
+                      <div className="text-2xl font-bold text-white">132M</div>
+                      <div className="text-slate-500 text-xs">PC Dominant</div>
+                    </div>
+                    <div className="bg-gradient-to-br from-blue-900/40 to-blue-900/20 rounded-lg p-4 border border-blue-500/20">
+                      <div className="text-blue-400 text-xs font-medium mb-0.5">PlayStation MAU</div>
+                      <div className="text-2xl font-bold text-white">120M+</div>
+                      <div className="text-slate-500 text-xs">PSN Global Users</div>
+                    </div>
+                    <div className="bg-gradient-to-br from-violet-900/30 to-violet-900/20 rounded-lg p-4 border border-violet-500/20">
+                      <div className="text-violet-400 text-xs font-medium mb-0.5">Epic MAU</div>
+                      <div className="text-2xl font-bold text-white">75M</div>
+                      <div className="text-slate-500 text-xs">Free Games Growth</div>
+                    </div>
+                  </div>
+                </section>
+
+                {/* Category Tabs - Platform tabs in green, Player Experience in amber */}
+                <div className="grid grid-cols-6 gap-2 mb-5" role="tablist" aria-label="Platform comparison categories">
+                  {comparisonData.categories.map(cat => {
+                    const isPlayerTab = cat.id === 'experience';
+                    const isActive = activeCategory === cat.id;
+                    
+                    // Determine button styling based on tab type and active state
+                    let buttonClass = 'flex flex-col items-center justify-center gap-1 px-3 py-3 rounded-xl text-xs font-medium transition-all min-h-[60px] ';
+                    
+                    if (isActive) {
+                      buttonClass += isPlayerTab 
+                        ? 'bg-amber-600 text-white shadow-lg shadow-amber-900/30'
+                        : 'bg-emerald-600 text-white shadow-lg shadow-emerald-900/30';
+                    } else {
+                      buttonClass += isPlayerTab
+                        ? 'bg-amber-900/30 text-amber-400 border border-amber-700/40 hover:bg-amber-800/40 hover:text-amber-300'
+                        : 'bg-emerald-900/20 text-emerald-400 border border-emerald-700/30 hover:bg-emerald-800/30 hover:text-emerald-300';
+                    }
+                    
+                    return (
+                      <button
+                        key={cat.id}
+                        id={"tab-" + cat.id}
+                        role="tab"
+                        aria-selected={isActive}
+                        aria-controls={"panel-" + cat.id}
+                        onClick={() => setActiveCategory(cat.id)}
+                        className={buttonClass}
+                      >
+                        <span className="text-base">{cat.icon}</span>
+                        <span className="text-center leading-tight">{cat.name}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Comparison Table */}
+                {activeData && (
+                  <section 
+                    className="mb-8 fade-in"
+                    id={"panel-" + activeCategory}
+                    role="tabpanel"
+                    aria-labelledby={"tab-" + activeCategory}
+                  >
+                    <div className="bg-slate-900/50 rounded-2xl border border-slate-800/80 overflow-hidden">
+                      {/* Category Header */}
+                      <div className="bg-slate-800/30 px-5 py-3 border-b border-slate-800/50">
+                        <div className="flex items-center justify-between flex-wrap gap-2">
+                          <h2 className="text-base font-semibold text-white flex items-center gap-2">
+                            <span>{activeData.icon}</span>
+                            {activeData.name}
+                          </h2>
+                          <span className="text-xs text-slate-500 flex items-center gap-1">
+                            <span className="text-blue-400">⊕</span> Click rows with "Details" for more info
+                          </span>
+                        </div>
+                        <div className="text-xs text-slate-400 mt-1.5">
+                          💡 {activeData.opportunity}
+                        </div>
+                      </div>
+                      
+                      {/* Table */}
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="border-b border-slate-800/50">
+                              <th className="text-left px-5 py-3 text-xs font-medium text-slate-400 w-44">Feature</th>
+                              <th className="text-left px-3 py-3 text-xs font-medium text-emerald-400 bg-emerald-500/5">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="w-5 h-5 bg-emerald-600 rounded flex items-center justify-center text-white text-xs font-bold">X</span>
+                                  Xbox
+                                </div>
+                              </th>
+                              <th className="text-left px-3 py-3 text-xs font-medium text-slate-400">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="w-5 h-5 bg-slate-600 rounded flex items-center justify-center text-white text-xs font-bold">S</span>
+                                  Steam
+                                </div>
+                              </th>
+                              <th className="text-left px-3 py-3 text-xs font-medium text-blue-400">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="w-5 h-5 bg-blue-600 rounded flex items-center justify-center text-white text-xs font-bold">P</span>
+                                  PlayStation
+                                </div>
+                              </th>
+                              <th className="text-left px-3 py-3 text-xs font-medium text-violet-400">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="w-5 h-5 bg-violet-600 rounded flex items-center justify-center text-white text-xs font-bold">E</span>
+                                  Epic
+                                </div>
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {activeData.features.map((feature, idx) => (
+                              <tr 
+                                key={feature.name} 
+                                className={`border-b border-slate-800/30 transition-all ${feature.expandable ? 'cursor-pointer hover:bg-emerald-500/10 hover:border-emerald-500/30' : ''} ${idx % 2 === 0 ? 'bg-slate-800/10' : ''}`}
+                                onClick={() => feature.expandable && openModal(feature)}
+                              >
+                                <td className="px-5 py-3 text-xs text-slate-300 font-medium">
+                                  <div className="flex items-center gap-2">
+                                    {feature.name}
+                                    {feature.expandable && (
+                                      <span className="flex items-center gap-1 text-blue-400 text-xs bg-blue-500/10 px-1.5 py-0.5 rounded-full cursor-pointer hover:bg-blue-500/20 transition-colors">
+                                        <span>⊕</span>
+                                      </span>
+                                    )}
+                                  </div>
+                                </td>
+                                <td className="px-3 py-3 bg-emerald-500/5">
+                                  <div className="text-xs text-white mb-1">{feature.xbox.value}</div>
+                                  <StatusBadge status={feature.xbox.status} />
+                                </td>
+                                <td className="px-3 py-3">
+                                  <div className="text-xs text-white mb-1">{feature.steam.value}</div>
+                                  <StatusBadge status={feature.steam.status} />
+                                </td>
+                                <td className="px-3 py-3">
+                                  <div className="text-xs text-white mb-1">{feature.playstation.value}</div>
+                                  <StatusBadge status={feature.playstation.status} />
+                                </td>
+                                <td className="px-3 py-3">
+                                  <div className="text-xs text-white mb-1">{feature.epic.value}</div>
+                                  <StatusBadge status={feature.epic.status} />
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </section>
+                )}
+
+                {/* Console Comparison Callout */}
+                <section className="bg-gradient-to-r from-emerald-950/30 via-slate-900/50 to-blue-950/30 rounded-xl border border-slate-700/50 p-5">
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-600 to-blue-600 flex items-center justify-center flex-shrink-0">
+                      <span className="text-white text-lg">⚔️</span>
+                    </div>
+                    <div>
+                      <h3 className="text-white font-semibold text-sm mb-1.5">Xbox vs Steam vs PlayStation vs Epic</h3>
+                      <p className="text-slate-400 text-xs leading-relaxed">
+                        <span className="text-emerald-400 font-medium">Xbox advantages</span>: cross-ecosystem wallet, Game Pass day-one releases, better PC integration.
+                        <span className="text-slate-300 font-medium"> Steam leads</span> on discovery (AI personalization), dynamic bundle pricing, and community features.
+                        <span className="text-blue-400 font-medium"> PlayStation advantages</span>: larger MAU (120M vs 100M), stronger first-party exclusives engagement.
+                        <span className="text-violet-400 font-medium"> Epic competes differently</span>—via free games (100+ giveaways) and coupons rather than features.
+                      </p>
+                    </div>
+                  </div>
+                </section>
+              </main>
+
+              {/* Detail Modal */}
+              <Modal 
+                isOpen={!!modalContent} 
+                onClose={() => setModalContent(null)}
+                title={modalContent?.name}
+              >
+                {modalContent && (
+                  <div className="space-y-4">
+                    <div className="bg-emerald-500/10 rounded-lg p-4 border border-emerald-500/20">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="w-5 h-5 bg-emerald-600 rounded flex items-center justify-center text-white text-xs font-bold">X</span>
+                        <span className="text-emerald-400 font-semibold text-sm">Xbox</span>
+                        <StatusBadge status={modalContent.xbox.status} />
+                      </div>
+                      <p className="text-slate-300 text-sm">{modalContent.details?.xbox}</p>
+                    </div>
+                    
+                    <div className="bg-slate-500/10 rounded-lg p-4 border border-slate-500/20">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="w-5 h-5 bg-slate-600 rounded flex items-center justify-center text-white text-xs font-bold">S</span>
+                        <span className="text-slate-300 font-semibold text-sm">Steam</span>
+                        <StatusBadge status={modalContent.steam.status} />
+                      </div>
+                      <p className="text-slate-300 text-sm">{modalContent.details?.steam}</p>
+                    </div>
+                    
+                    <div className="bg-blue-500/10 rounded-lg p-4 border border-blue-500/20">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="w-5 h-5 bg-blue-600 rounded flex items-center justify-center text-white text-xs font-bold">P</span>
+                        <span className="text-blue-400 font-semibold text-sm">PlayStation</span>
+                        <StatusBadge status={modalContent.playstation.status} />
+                      </div>
+                      <p className="text-slate-300 text-sm">{modalContent.details?.playstation}</p>
+                    </div>
+                    
+                    <div className="bg-violet-500/10 rounded-lg p-4 border border-violet-500/20">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="w-5 h-5 bg-violet-600 rounded flex items-center justify-center text-white text-xs font-bold">E</span>
+                        <span className="text-violet-400 font-semibold text-sm">Epic</span>
+                        <StatusBadge status={modalContent.epic.status} />
+                      </div>
+                      <p className="text-slate-300 text-sm">{modalContent.details?.epic}</p>
+                    </div>
+                    
+                    {modalContent.fullDetails && (
+                      <FullDetailsSection fullDetails={modalContent.fullDetails} />
+                    )}
+                  </div>
+                )}
+              </Modal>
+
+              {/* Priority Rationale Modal */}
+              <Modal 
+                isOpen={!!priorityModal} 
+                onClose={() => setPriorityModal(null)}
+                title={priorityModal?.title}
+              >
+                {priorityModal && (
+                  <div className="space-y-4">
+                    <div className={`${priorityModal.isPlayer ? 'bg-amber-500/10 border-amber-500/20' : 'bg-emerald-500/10 border-emerald-500/20'} rounded-lg p-4 border`}>
+                      <div className={`${priorityModal.isPlayer ? 'text-amber-400' : 'text-emerald-400'} text-xs font-semibold mb-2`}>
+                        Priority {priorityModal.number} — {priorityModal.categoryName || 'Platform'}
+                      </div>
+                      <p className="text-slate-300 text-sm mb-4">{priorityModal.description}</p>
+                    </div>
+                    
+                    <div className="bg-slate-800/50 rounded-lg p-4 border border-slate-700/50">
+                      <div className="text-slate-400 text-xs font-semibold uppercase tracking-wide mb-2">Rationale</div>
+                      <p className="text-slate-300 text-sm leading-relaxed">{priorityModal.rationale}</p>
+                    </div>
+                  </div>
+                )}
+              </Modal>
+
+              {/* Footer */}
+              <footer className="relative border-t border-slate-800/50 mt-12">
+                <div className="max-w-7xl mx-auto px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-2">
+                  <p className="text-slate-600 text-xs">Xbox Comparison to Four Competitive Gaming Platforms · 2026 Analysis</p>
+                  <p className="text-slate-700 text-xs">Data sourced from platform documentation, Statista, and industry reports</p>
+                </div>
+              </footer>
+            </div>
+          );
+        }
+
+        // Render
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<ComparisonDashboard />);
+    </script>
+</body>
+</html>
